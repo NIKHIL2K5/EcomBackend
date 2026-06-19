@@ -62,7 +62,7 @@ const uploadToCloudinaryOrLocal = async (file, host) => {
     if (isCloudinaryConfigured()) {
         try {
             const result = await cloudinary.uploader.upload(file.path, {
-                folder: 'luxe_ecom',
+                folder: 'the_elegant_ecom',
             });
             // Remove temp file
             fs.unlinkSync(file.path);

@@ -45,7 +45,7 @@ app.use('/api/payment', paymentRoutes);
 
 // Root Endpoint
 app.get('/', (req, res) => {
-    res.json({ message: 'Welcome to the LUXE E-commerce API' });
+    res.json({ message: 'Welcome to the THE ELEGANT E-commerce API' });
 });
 
 // Keep-alive: ping self to prevent Render free tier from sleeping
@@ -59,7 +59,7 @@ setInterval(keepAlive, 14 * 60 * 1000);
 
 // Database connection
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/luxe-ecom';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/the-elegant-ecom';
 
 mongoose.connection.on('disconnected', () => {
     console.warn('MongoDB disconnected — falling back to local data store');

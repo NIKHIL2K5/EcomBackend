@@ -53,8 +53,8 @@ const seedInitialUsers = () => {
 
         users.push({
             _id: 'fallback-admin-id',
-            name: 'Luxe Admin',
-            email: 'admin@luxe.com',
+            name: 'The Elegant Admin',
+            email: 'admin@theelegant.com',
             password: adminPassword,
             role: 'admin',
             createdAt: new Date().toISOString(),
@@ -62,8 +62,8 @@ const seedInitialUsers = () => {
 
         users.push({
             _id: 'fallback-customer-id',
-            name: 'Luxe Customer',
-            email: 'customer@luxe.com',
+            name: 'The Elegant Customer',
+            email: 'customer@theelegant.com',
             password: customerPassword,
             role: 'customer',
             createdAt: new Date().toISOString(),
@@ -287,7 +287,7 @@ export const fallbackDB = {
     },
 
     async findOrCreateUserByPhone(phone) {
-        const email = `${phone}@luxe.com`;
+        const email = `${phone}@theelegant.com`;
         const users = readJSON(USERS_FILE);
         let user = users.find((u) => u.email === email);
         if (!user) {

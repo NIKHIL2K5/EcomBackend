@@ -71,7 +71,7 @@ Create a `.env` file in the `backend/` directory:
 PORT=5000
 
 # MongoDB
-MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/luxe-ecom
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/the-elegant-ecom
 
 # Authentication
 JWT_SECRET=your_jwt_secret_key

@@ -34,16 +34,16 @@ const seedDatabase = async () => {
         // Seed Users
         console.log('Seeding default users...');
         const adminUser = await User.create({
-            name: 'Luxe Admin',
-            email: 'admin@luxe.com',
+            name: 'The Elegant Admin',
+            email: 'admin@theelegant.com',
             password: 'adminpassword', // Will be hashed via pre-save middleware
             role: 'admin',
         });
         console.log(`Admin user seeded: email: ${adminUser.email}, password: adminpassword`);
 
         const customerUser = await User.create({
-            name: 'Luxe Customer',
-            email: 'customer@luxe.com',
+            name: 'The Elegant Customer',
+            email: 'customer@theelegant.com',
             password: 'customerpassword', // Will be hashed via pre-save middleware
             role: 'customer',
         });

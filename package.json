@@ -1,7 +1,7 @@
 {
-  "name": "luxe-ecom-server",
+  "name": "the-elegant-ecom-server",
   "version": "1.0.0",
-  "description": "Backend server for LUXE premium e-commerce site",
+  "description": "Backend server for THE ELEGANT premium e-commerce site",
   "main": "server.js",
   "type": "module",
   "scripts": {

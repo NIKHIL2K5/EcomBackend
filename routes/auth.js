@@ -490,7 +490,7 @@ router.post('/verify-otp', async (req, res) => {
             if (!user) {
                 user = await User.create({
                     name: `Customer ${phone.slice(-4)}`,
-                    email: `${phone.replace(/\D/g, '')}@phone.luxe.com`,
+                    email: `${phone.replace(/\D/g, '')}@phone.theelegant.com`,
                     password: bcrypt.hashSync(crypto.randomBytes(20).toString('hex'), 10),
                     phone,
                     role: 'customer',
