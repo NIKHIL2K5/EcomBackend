@@ -20,16 +20,26 @@ const twilioClient = (() => {
 
 // ─── Gmail SMTP transporter (singleton) ─────────────────────────────────────
 const smtpTransporter = (() => {
-    const { SMTP_EMAIL, SMTP_APP_PASSWORD } = process.env;
-    if (!SMTP_EMAIL || !SMTP_APP_PASSWORD) return null;
-    return nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: SMTP_EMAIL, pass: SMTP_APP_PASSWORD },
+    const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+    if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
+        console.warn('[SMTP] NOT configured — SMTP_HOST, SMTP_USER or SMTP_PASS missing. Reset emails will not be sent.');
+        return null;
+    }
+    const transport = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: parseInt(SMTP_PORT || '587', 10),
+        secure: false,      // false = STARTTLS on port 587
+        requireTLS: true,   // reject if server doesn't support TLS — fail fast
+        auth: { user: SMTP_USER, pass: SMTP_PASS },
     });
+    transport.verify()
+        .then(() => console.log(`[SMTP] Ready — ${SMTP_HOST}:${SMTP_PORT || 587} as ${SMTP_USER}`))
+        .catch(err => console.error(`[SMTP] Connection failed at startup: ${err.message}`));
+    return transport;
 })();
 
 const buildResetEmail = (toName, toEmail, resetLink) => ({
-    from: `"THE ELEGANT" <${process.env.SMTP_EMAIL}>`,
+    from: `"THE ELEGANT" <${process.env.SMTP_USER}>`,
     to: toEmail,
     subject: 'Password Reset Request — THE ELEGANT',
     html: `
@@ -182,6 +192,118 @@ const buildResetEmail = (toName, toEmail, resetLink) => ({
 </html>`,
     text: `Dear ${toName},\n\nWe received a request to reset the password for your THE ELEGANT account.\n\nReset your password here (link expires in 10 minutes):\n${resetLink}\n\nIf you did not request this, please ignore this email — your account remains secure.\n\n© ${new Date().getFullYear()} THE ELEGANT. All rights reserved.`,
 });
+
+const buildNoAccountEmail = (toEmail) => {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    return {
+        from: `"THE ELEGANT" <${process.env.SMTP_USER}>`,
+        to: toEmail,
+        subject: 'Password Reset Request — THE ELEGANT',
+        html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Reset your password — THE ELEGANT</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f2f1ef;font-family:Georgia,'Times New Roman',serif">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f2f1ef;padding:48px 16px">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+             style="max-width:600px;width:100%;background:#ffffff;border:1px solid #e0dbd5">
+        <tr><td style="background:#c8a96e;height:4px;font-size:1px;line-height:1px">&nbsp;</td></tr>
+        <tr>
+          <td style="background:#0a0a0a;padding:36px 48px 32px;text-align:center">
+            <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:11px;
+                       letter-spacing:0.35em;text-transform:uppercase;color:#c8a96e">
+              ✦ &nbsp; The Elegant &nbsp; ✦
+            </p>
+            <p style="margin:12px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:26px;
+                       font-weight:normal;letter-spacing:0.12em;text-transform:uppercase;color:#ffffff">
+              Password Reset
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 48px">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr><td style="border-top:1px solid #c8a96e;font-size:1px;line-height:1px">&nbsp;</td></tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:44px 48px 36px">
+            <p style="margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;
+                       font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:#c8a96e">
+              Hello,
+            </p>
+            <p style="margin:20px 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+                       font-size:15px;line-height:1.75;color:#3a3a3a">
+              We received a password reset request for <strong>${toEmail}</strong>,
+              but no account is registered with this email address at <strong>THE ELEGANT</strong>.
+            </p>
+            <p style="margin:16px 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+                       font-size:15px;line-height:1.75;color:#3a3a3a">
+              If you meant to sign in with a different email, please try again. If you're new here,
+              you can create a free account using the button below.
+            </p>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="margin:36px 0">
+              <tr>
+                <td style="background:#0a0a0a;border:1px solid #c8a96e">
+                  <a href="${frontendUrl}/auth?mode=register"
+                     style="display:inline-block;padding:16px 40px;
+                            font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+                            font-size:12px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;
+                            color:#c8a96e;text-decoration:none">
+                    Create an Account
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="background:#faf9f7;border-left:3px solid #c8a96e;padding:16px 20px">
+                  <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+                             font-size:13px;line-height:1.6;color:#666666">
+                    If you did not request this, you can safely ignore this email.
+                    No changes have been made to any account.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 48px">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+              <tr><td style="border-top:1px solid #e8e4de;font-size:1px;line-height:1px">&nbsp;</td></tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px 48px 32px;text-align:center">
+            <p style="margin:0;font-family:Georgia,'Times New Roman',serif;
+                       font-size:10px;letter-spacing:0.3em;text-transform:uppercase;color:#c8a96e">
+              The Elegant
+            </p>
+            <p style="margin:10px 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+                       font-size:12px;color:#aaaaaa;line-height:1.6">
+              © ${new Date().getFullYear()} THE ELEGANT. All rights reserved.<br>
+              You received this email because a password reset was requested for this address.
+            </p>
+          </td>
+        </tr>
+        <tr><td style="background:#c8a96e;height:4px;font-size:1px;line-height:1px">&nbsp;</td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+        text: `Hello,\n\nWe received a password reset request for ${toEmail}, but no account is registered with this email at THE ELEGANT.\n\nIf you meant to use a different email, please try again. To create a new account, visit: ${frontendUrl}/auth?mode=register\n\nIf you did not request this, you can safely ignore this email.\n\n© ${new Date().getFullYear()} THE ELEGANT. All rights reserved.`,
+    };
+};
 
 // Generate Token helper
 const generateToken = (id) => {
@@ -407,35 +529,50 @@ router.post('/forgot-password', async (req, res) => {
             return res.status(503).json({ message: 'Password reset requires a live database connection. Please try again in a moment.' });
         }
 
-        const user = await User.findOne({ email: email.toLowerCase().trim() });
+        const normalizedEmail = email.toLowerCase().trim();
+        const user = await User.findOne({ email: normalizedEmail });
 
-        if (user) {
-            // Generate and persist the reset token
-            const resetToken = crypto.randomBytes(32).toString('hex');
-            user.resetPasswordToken = resetToken;
-            user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-            await user.save();
+        if (smtpTransporter) {
+            try {
+                if (user) {
+                    // Registered user — generate token and email the reset link
+                    const resetToken = crypto.randomBytes(32).toString('hex');
+                    user.resetPasswordToken = resetToken;
+                    user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+                    await user.save();
 
-            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-            const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+                    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                    const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
 
-            if (smtpTransporter) {
-                try {
+                    console.log(`[SMTP] Sending reset link to ${normalizedEmail}…`);
                     await smtpTransporter.sendMail(buildResetEmail(user.name, user.email, resetLink));
-                } catch (mailErr) {
-                    // SMTP send failed — log the link so it's not lost
-                    console.error('SMTP send error:', mailErr.message);
-                    console.log('\n========== PASSWORD RESET (email delivery failed) ==========');
-                    console.log(`Email : ${user.email}`);
-                    console.log(`Link  : ${resetLink}`);
-                    console.log('=============================================================\n');
+                    console.log(`[SMTP] Reset email delivered to ${normalizedEmail}`);
+                } else {
+                    // Unknown email — send a "no account" email so the sender always gets a reply
+                    console.log(`[SMTP] No account for "${normalizedEmail}" — sending no-account email`);
+                    await smtpTransporter.sendMail(buildNoAccountEmail(normalizedEmail));
+                    console.log(`[SMTP] No-account email delivered to ${normalizedEmail}`);
                 }
-            } else {
-                // SMTP not configured — log token to console for development use
-                console.log('\n========== PASSWORD RESET (SMTP not configured) ==========');
+            } catch (mailErr) {
+                console.error(`[SMTP] Send failed for ${normalizedEmail}: ${mailErr.message}`);
+                if (user) {
+                    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                    console.log(`[SMTP] Reset link (use manually): ${frontendUrl}/reset-password?token=${user.resetPasswordToken}`);
+                }
+            }
+        } else {
+            if (user) {
+                const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+                const resetToken = crypto.randomBytes(32).toString('hex');
+                user.resetPasswordToken = resetToken;
+                user.resetPasswordExpires = new Date(Date.now() + 10 * 60 * 1000);
+                await user.save();
+                console.log(`\n========== PASSWORD RESET (SMTP not configured) ==========`);
                 console.log(`Email : ${user.email}`);
-                console.log(`Link  : ${resetLink}`);
-                console.log('==========================================================\n');
+                console.log(`Link  : ${frontendUrl}/reset-password?token=${resetToken}`);
+                console.log(`==========================================================\n`);
+            } else {
+                console.log(`[SMTP] Not configured. No account for "${normalizedEmail}" — nothing sent.`);
             }
         }
 
@@ -469,6 +606,11 @@ router.post('/reset-password', async (req, res) => {
 
         if (!user) {
             return res.status(400).json({ message: 'This reset link is invalid or has expired. Please request a new one.' });
+        }
+
+        const isSameAsOld = await user.comparePassword(password);
+        if (isSameAsOld) {
+            return res.status(400).json({ message: 'Your new password cannot be the same as your current password. Please choose a different one.' });
         }
 
         user.password = password;
